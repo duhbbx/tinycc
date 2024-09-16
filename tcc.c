@@ -24,6 +24,7 @@
 #endif
 #include "tcctools.c"
 
+/* tcc --help 输出的文本 */
 static const char help[] =
     "Tiny C Compiler "TCC_VERSION" - Copyright (C) 2001-2006 Fabrice Bellard\n"
     "Usage: tcc [options...] [-o outfile] [-c] infile(s)...\n"
@@ -197,6 +198,7 @@ static const char version[] =
     ")\n"
     ;
 
+/* 为什么都是用static 修饰的方法呢? */
 static void print_dirs(const char *msg, char **paths, int nb_paths)
 {
     int i;
@@ -261,6 +263,7 @@ static char *default_outputfile(TCCState *s, const char *first_file)
     return tcc_strdup(buf);
 }
 
+/* 返回时钟 */
 static unsigned getclock_ms(void)
 {
 #ifdef _WIN32
@@ -274,6 +277,7 @@ static unsigned getclock_ms(void)
 
 int main(int argc0, char **argv0)
 {
+    /* TCCState 是啥? */
     TCCState *s, *s1;
     int ret, opt, n = 0, t = 0, done;
     unsigned start_time = 0, end_time = 0;
@@ -281,13 +285,15 @@ int main(int argc0, char **argv0)
     int argc; char **argv;
     FILE *ppfp = stdout;
 
-redo:
+
+
+redo: /* 使用了 label, why */
     argc = argc0, argv = argv0;
-    s = s1 = tcc_new();
+    s = s1 = tcc_new();  printf("#### tcc state 的状态使用 tcc_new() \n");
 #ifdef CONFIG_TCC_SWITCHES /* predefined options */
-    tcc_set_options(s, CONFIG_TCC_SWITCHES);
+    tcc_set_options(s, CONFIG_TCC_SWITCHES);   printf("#### tcc_set_options, 这个 options 是什么呢?\n");
 #endif
-    opt = tcc_parse_args(s, &argc, &argv, 1);
+    opt = tcc_parse_args(s, &argc, &argv, 1);  printf("#### 解析 tcc 的参数 tcc_parse_args \n");
     if (opt < 0)
         return 1;
 
@@ -363,6 +369,7 @@ redo:
     do {
         struct filespec *f = s->files[n];
         s->filetype = f->type;
+        printf("#### 编译单个文件 -> %s\n", f->name);
         if (f->type & AFF_TYPE_LIB) {
             ret = tcc_add_library_err(s, f->name);
         } else {
@@ -407,8 +414,8 @@ redo:
     else if (s->do_bench)
         tcc_print_stats(s, end_time - start_time);
     tcc_delete(s);
-    if (!done)
-        goto redo;
+    if (!done) {  printf("#### 没有完成,跳转到 redo 继续.........\n");
+        goto redo;}
     if (ppfp && ppfp != stdout)
         fclose(ppfp);
     return ret;
