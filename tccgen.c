@@ -382,6 +382,7 @@ ST_FUNC void tccgen_init(TCCState *s1)
 
 ST_FUNC int tccgen_compile(TCCState *s1)
 {
+	printf("#### 进入了 tccgen_compile 这个方法了.........\n");
     funcname = "";
     func_ind = -1;
     anon_sym = SYM_FIRST_ANOM;
@@ -397,6 +398,8 @@ ST_FUNC int tccgen_compile(TCCState *s1)
     printf("%s: **** new file\n", file->filename);
 #endif
     parse_flags = PARSE_FLAG_PREPROCESS | PARSE_FLAG_TOK_NUM | PARSE_FLAG_TOK_STR;
+
+	printf("#### next() 是干啥的.........\n");
     next();
     decl(VT_CONST);
     gen_inline_functions(s1);
