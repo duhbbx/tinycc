@@ -733,6 +733,7 @@ ST_FUNC int tcc_open(TCCState *s1, const char *filename)
 /* compile the file opened in 'file'. Return non zero if errors. */
 static int tcc_compile(TCCState *s1, int filetype, const char *str, int fd)
 {
+	printf("#### tcc_compile  compile the file opened in 'file'. Return non zero if errors. \n");
     /* Here we enter the code section where we use the global variables for
        parsing and code generation (tccpp.c, tccgen.c, <target>-gen.c).
        Other threads need to wait until we're done.
@@ -755,16 +756,22 @@ static int tcc_compile(TCCState *s1, int filetype, const char *str, int fd)
             file->fd = fd;
         }
 
+	    printf("#### tcc compile   preprocess_start........\n");
         preprocess_start(s1, filetype);
+	    printf("#### tcc compile   tccgen_init........\n");
         tccgen_init(s1);
 
         if (s1->output_type == TCC_OUTPUT_PREPROCESS) {
+		printf("#### tcc compile   tcc_preprocess........\n");
             tcc_preprocess(s1);
         } else {
+		printf("#### tcc compile   tccelf_begin_file........\n");
             tccelf_begin_file(s1);
             if (filetype & (AFF_TYPE_ASM | AFF_TYPE_ASMPP)) {
                 tcc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
             } else {
+
+		    printf("#### tcc compile   tccgen_compile........\n");
                 tccgen_compile(s1);
             }
             tccelf_end_file(s1);
@@ -1015,6 +1022,7 @@ ST_FUNC int tcc_add_file_internal(TCCState *s1, const char *filename, int flags)
         return 0;
 
     /* open the file */
+    printf("在 tcc_add_file_internal 中 使用  _tcc_open 打开文件 %s\n", filename);
     fd = _tcc_open(s1, filename);
     if (fd < 0) {
         if (flags & AFF_PRINT_ERROR)
@@ -1112,6 +1120,7 @@ check_success:
     } else {
         /* update target deps */
         dynarray_add(&s1->target_deps, &s1->nb_target_deps, tcc_strdup(filename));
+	printf("tcc_add_file_internal 感觉到了这里就是对文件进行编译了...... %s\n", filename);
         ret = tcc_compile(s1, flags, filename, fd);
     }
     s1->current_filename = NULL;
@@ -1120,10 +1129,13 @@ check_success:
 
 LIBTCCAPI int tcc_add_file(TCCState *s, const char *filename)
 {
+    printf("执行 tcc_add_file 这个方法,LIBTCCAPI 这个宏是啥意思? filename 当做了入参了\n");
     int filetype = s->filetype;
     if (0 == (filetype & AFF_TYPE_MASK)) {
         /* use a file extension to detect a filetype */
         const char *ext = tcc_fileextension(filename);
+
+	printf("获取 文件的后缀名..... %s\n", ext);
         if (ext[0]) {
             ext++;
             if (!strcmp(ext, "S"))
@@ -1140,6 +1152,7 @@ LIBTCCAPI int tcc_add_file(TCCState *s, const char *filename)
             filetype = AFF_TYPE_C;
         }
     }
+    printf("准备调用 tcc_add_file_internal 方法了\n");
     return tcc_add_file_internal(s, filename, filetype | AFF_PRINT_ERROR);
 }
 
