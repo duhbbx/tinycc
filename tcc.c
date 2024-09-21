@@ -283,13 +283,13 @@ int main(int argc0, char **argv0)
     unsigned start_time = 0, end_time = 0;
     const char *first_file;
     int argc; char **argv;
-    FILE *ppfp = stdout;
+    FILE *ppfp = stdout;  printf("ppfp 是啥,为什么取这个名字: ppfp 是指向 stdcout 的文件指针\n");
 
 
 
 redo: /* 使用了 label, why */
     argc = argc0, argv = argv0;
-    s = s1 = tcc_new();  printf("#### tcc state 的状态使用 tcc_new() \n");
+    s = s1 = tcc_new();  printf("#### tcc state 的状态使用 tcc_new() >>>>>>>>> \n");
 #ifdef CONFIG_TCC_SWITCHES /* predefined options */
     tcc_set_options(s, CONFIG_TCC_SWITCHES);   printf("#### tcc_set_options, 这个 options 是什么呢?\n");
 #endif
@@ -327,25 +327,27 @@ redo: /* 使用了 label, why */
             print_search_dirs(s);
             return 0;
         }
-
+        printf("##### 一共有多少个输入文件呢? %d 个\n", s->nb_files);
         if (s->nb_files == 0) {
             tcc_error_noabort("no input files");
-        } else if (s->output_type == TCC_OUTPUT_PREPROCESS) {
+        } else if (s->output_type == TCC_OUTPUT_PREPROCESS) { printf("tcc.c 只是进行预处理..................\n");
             if (s->outfile && 0!=strcmp("-",s->outfile)) {
                 ppfp = fopen(s->outfile, "wb");
                 if (!ppfp)
                     tcc_error_noabort("could not write '%s'", s->outfile);
             }
-        } else if (s->output_type == TCC_OUTPUT_OBJ && !s->option_r) {
+        } else if (s->output_type == TCC_OUTPUT_OBJ && !s->option_r) { printf("生成的是目标文件................\n");
             if (s->nb_libraries)
                 tcc_error_noabort("cannot specify libraries with -c");
-            else if (s->nb_files > 1 && s->outfile)
+            else if (s->nb_files > 1 && s->outfile) {
+                // #define tcc_error_noabort   TCC_SET_STATE(_tcc_error_noabort)
                 tcc_error_noabort("cannot specify output file with -c many files");
+            }
         }
         if (s->nb_errors)
             return 1;
-        if (s->do_bench)
-            start_time = getclock_ms();
+        if (s->do_bench) { printf("有 bench 标识, 准备记录起始时间了");
+            start_time = getclock_ms(); }
     }
 
     set_environment(s);
@@ -370,20 +372,22 @@ redo: /* 使用了 label, why */
         struct filespec *f = s->files[n];
         s->filetype = f->type;
         printf("#### 编译单个文件 -> %s\n", f->name);
-        if (f->type & AFF_TYPE_LIB) {
+        if (f->type & AFF_TYPE_LIB) { printf("AFF_TYPE_LIB类型......... 使用枚举来判断\n");
             ret = tcc_add_library_err(s, f->name);
         } else {
             if (1 == s->verbose)
                 printf("-> %s\n", f->name);
-            if (!first_file)
+            if (!first_file)        // 为什么要有 first_file 呢?
                 first_file = f->name;
-            ret = tcc_add_file(s, f->name);
+            ret = tcc_add_file(s, f->name);  printf("tcc_add_file 是干啥的...........\n");
         }
-        done = ret || ++n >= s->nb_files;
+        done = ret || ++n >= s->nb_files;  printf("判断是否 done了..................\n");
     } while (!done && (s->output_type != TCC_OUTPUT_OBJ || s->option_r));
 
-    if (s->do_bench)
+    if (s->do_bench) { printf("判断是否是 bench, 如果是的话计算时间");
         end_time = getclock_ms();
+    }
+        
 
     if (s->run_test) {
         t = 0;
@@ -418,5 +422,6 @@ redo: /* 使用了 label, why */
         goto redo;}
     if (ppfp && ppfp != stdout)
         fclose(ppfp);
+    printf("编译结束了....... 返回的结果是 %d, 是否成功: %s\n", ret, ret ? "失败" : "成功");
     return ret;
 }

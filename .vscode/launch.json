@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(lldb) Launch",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcc", // 替换为你的可执行文件路径
+            "args": ["a.c", "-o", "a.out"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build with tcc",  // 用于编译任务
+        }
+    ]
+}
