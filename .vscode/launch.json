@@ -6,7 +6,7 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/tcc", // 替换为你的可执行文件路径
-            "args": ["a.c", "-o", "a.out"],
+            "args": ["a.c", "a1.c", "-o", "a.out"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "build with tcc",  // 用于编译任务
         }

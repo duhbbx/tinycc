@@ -225,14 +225,17 @@ static void set_environment(TCCState *s)
     char * path;
 
     path = getenv("C_INCLUDE_PATH");
+    printf("C_INCLUDE_PATH: %s\n", path);
     if(path != NULL) {
         tcc_add_sysinclude_path(s, path);
     }
     path = getenv("CPATH");
+    printf("CPATH: %s\n", path);
     if(path != NULL) {
         tcc_add_include_path(s, path);
     }
     path = getenv("LIBRARY_PATH");
+    printf("LIBRARY_PATH: %s\n", path);
     if(path != NULL) {
         tcc_add_library_path(s, path);
     }
@@ -294,10 +297,9 @@ redo: /* 使用了 label, why */
     tcc_set_options(s, CONFIG_TCC_SWITCHES);   printf("#### tcc_set_options, 这个 options 是什么呢?\n");
 #endif
     opt = tcc_parse_args(s, &argc, &argv, 1);  printf("#### 解析 tcc 的参数 tcc_parse_args \n");
-    if (opt < 0)
-        return 1;
+    if (opt < 0) { printf("命令行参数解析错误\n"); return 1;}
 
-    if (n == 0) {
+    if (n == 0) { printf("命令行解析的参数 为 0 个则打印帮助语句\n");
         if (opt == OPT_HELP) {
             fputs(help, stdout);
             if (!s->verbose)
@@ -311,7 +313,7 @@ redo: /* 使用了 label, why */
         if (opt == OPT_M32 || opt == OPT_M64)
             return tcc_tool_cross(s, argv, opt);
         if (s->verbose)
-            printf("%s", version);
+            printf(" 嘿嘿，当前版本是: %s", version);
         if (opt == OPT_AR)
             return tcc_tool_ar(s, argc, argv);
 #ifdef TCC_TARGET_PE
@@ -344,6 +346,8 @@ redo: /* 使用了 label, why */
                 tcc_error_noabort("cannot specify output file with -c many files");
             }
         }
+
+        printf("##### 所以 opt 返回值是啥呢？ ====> %d\n", opt);
         if (s->nb_errors)
             return 1;
         if (s->do_bench) { printf("有 bench 标识, 准备记录起始时间了");
@@ -356,6 +360,7 @@ redo: /* 使用了 label, why */
     tcc_set_output_type(s, s->output_type);
     s->ppfp = ppfp;
 
+    // 如果输出是在内存里面或者预处理的话，做了 blabla......
     if ((s->output_type == TCC_OUTPUT_MEMORY
       || s->output_type == TCC_OUTPUT_PREPROCESS)
         && (s->dflag & 16)) { /* -dt option */

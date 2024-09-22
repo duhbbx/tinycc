@@ -3,9 +3,6 @@
 # Tiny C Compiler Makefile
 #
 
-CFLAGS = -g -O0 -Wall -Wdeclaration-after-statement -fno-strict-aliasing -fheinous-gnu-extensions -Wno-pointer-sign -Wno-sign-compare -Wno-unused-result -Wno-string-plus-int -Wno-deprecated-declarations
-
-
 ifndef TOP
  TOP = .
  INCLUDED = no
