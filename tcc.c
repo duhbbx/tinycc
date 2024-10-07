@@ -287,7 +287,7 @@ int main(int argc0, char **argv0)
     const char *first_file;
     int argc; char **argv;
     FILE *ppfp = stdout;
-    printf("ppfp 是啥,为什么取这个名字: ppfp 是指向 stdcout 的文件指针\n");
+    printf("ppfp 是啥,为什么取这个名字: ppfp 是指向 stdcout 的文件指针----------------++\n");
 
 
 

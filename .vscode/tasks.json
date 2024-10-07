@@ -1,19 +1,51 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
-            "type": "cppbuild",
-            "label": "build with tcc",
-            "command": "/usr/bin/make",
-            "args": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
+            "label": "build TinyCC",
+            "type": "shell",
+            "windows": {
+                "command": "",  // Windows 下的 make 命令
+                "args": [],
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "shell": {
+                        "executable": "D:\\msys64\\usr\\bin\\bash.exe",  // 指定 Windows 下的 bash 路径
+                        "args": ["--login", "-i", "-c", "make clean && ./configure --debug && make"]  // 登录并运行 make 命令
+                    },
+                    "env": {
+                        "MSYSTEM": "MINGW64",  // Windows 下切换到 mingw64 环境
+                        "CHERE_INVOKING": "1"  // 保持当前目录
+                    }
+                }
+            },
+            "linux": {
+                "command": "make",  // Linux 下的 make 命令
+                "args": [],
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "shell": {
+                        "executable": "/bin/bash",  // 指定 Linux 下的 bash 路径
+                        "args": ["-c", "make"]  // 直接运行 make 命令
+                    }
+                }
+            },
+            "osx": {
+                "command": "make",  // macOS 下的 make 命令
+                "args": [],
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "shell": {
+                        "executable": "/bin/bash",  // 指定 macOS 下的 bash 路径
+                        "args": ["-c", "make"]  // 直接运行 make 命令
+                    }
+                }
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "调试器生成的任务。"
+            "problemMatcher": []
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

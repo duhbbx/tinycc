@@ -401,6 +401,12 @@ ST_FUNC int tccgen_compile(TCCState *s1)
 
 	printf("#### next() 是干啥的........., 灵魂函数 next \n");
     printf("buf content: %s\n", file->buf_ptr);
+
+    if (!strcmp(file->filename, "a.c")) {
+        // 这里估计是永远都不会到了，因为切换文件的地方不在这里
+        printf("### 解析到我的文件了: %s\n", file->filename);
+    }
+
     next(); // 就是不知道这个 next 是怎么进来的，可能是遇到了 int 吗
     decl(VT_CONST);
     gen_inline_functions(s1);

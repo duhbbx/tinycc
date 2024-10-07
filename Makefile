@@ -157,7 +157,10 @@ PROGS = tcc$(EXESUF)
 TCCLIBS = $(LIBTCCDEF) $(LIBTCC) $(LIBTCC1)
 TCCDOCS = tcc.1 tcc-doc.html tcc-doc.info
 
-all: $(PROGS) $(TCCLIBS) $(TCCDOCS)
+
+# 精简一下构建的目标，不然会执行测试
+# all: $(PROGS) $(TCCLIBS) $(TCCDOCS)
+all: $(PROGS)
 
 # cross compiler targets to build
 TCC_X = i386 x86_64 i386-win32 x86_64-win32 x86_64-osx arm arm64 arm-wince c67

@@ -1,8 +1,4 @@
-
-#define a 100
-
 int main() {
-
-    int b = a + 100;
+    int b = 1 + 100;
     return b;
 }
