@@ -2140,14 +2140,13 @@ ST_FUNC void tcc_tcov_check_line(TCCState *s1, int start)
 ST_FUNC void tcc_tcov_start(TCCState *s1)
 {
     if (s1->test_coverage == 0)
-	return;
+	    return;
     if (!s1->dState)
         s1->dState = tcc_mallocz(sizeof *s1->dState);
     memset (&tcov_data, 0, sizeof (tcov_data));
     if (tcov_section == NULL) {
-        tcov_section = new_section(tcc_state, ".tcov", SHT_PROGBITS,
-				   SHF_ALLOC | SHF_WRITE);
-	section_ptr_add(tcov_section, 4); // pointer to executable name
+        tcov_section = new_section(tcc_state, ".tcov", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE);
+	    section_ptr_add(tcov_section, 4); // pointer to executable name
     }
 }
 

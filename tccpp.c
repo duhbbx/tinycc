@@ -842,7 +842,7 @@ static uint8_t *parse_pp_string(uint8_t *p, int sep, CString *str)
                 goto redo;
             }
         } else if (c == '\n') {
-        add_lf:
+add_lf:
             if (ACCEPT_LF_IN_STRINGS) {
                 file->line_num++;
                 goto add_char;
@@ -864,7 +864,7 @@ static uint8_t *parse_pp_string(uint8_t *p, int sep, CString *str)
                 cstr_ccat(str, '\r');
             goto redo;
         } else {
-        add_char:
+add_char:
             if (str)
                 cstr_ccat(str, c);
         }
@@ -1286,7 +1286,7 @@ ST_INLN void define_push(int v, int macro_type, int *str, Sym *first_arg)
     table_ident[v - TOK_IDENT]->sym_define = s;
 
     if (o && !macro_is_equal(o->d, s->d))
-	tcc_warning("%s redefined", get_tok_str(v, NULL));
+	    tcc_warning("%s redefined", get_tok_str(v, NULL));
 }
 
 /* undefined a define symbol. Its name is just set to zero */
@@ -1537,7 +1537,7 @@ ST_FUNC void pp_error(CString *cs)
 }
 
 /* parse after #define */
-ST_FUNC void parse_define(void)
+ST_FUNC void parse_define(void) // 解析 define 后面的宏的定义
 {
     Sym *s, *first, **ps;
     int v, t, varg, is_vaargs, t0;
@@ -1574,7 +1574,7 @@ ST_FUNC void parse_define(void)
                 next_nomacro();
             }
             if (varg < TOK_IDENT)
-        bad_list:
+bad_list:
                 tcc_error("bad macro parameter list");
             s = sym_push2(&define_stack, varg | SYM_FIELD, is_vaargs, 0);
             *ps = s;
@@ -1620,7 +1620,7 @@ ST_FUNC void parse_define(void)
 bad_twosharp:
         tcc_error("'##' cannot appear at either end of macro");
     define_push(v, t, str.str, first);
-    //tok_print(str.str, "#define (%d) %s %d:", t | is_vaargs * 4, get_tok_str(v, 0));
+    tok_print(str.str, "#define (%d) %s %d:", t | is_vaargs * 4, get_tok_str(v, 0));
 }
 
 static CachedInclude *search_cached_include(TCCState *s1, const char *filename, int add)
@@ -1817,7 +1817,7 @@ ST_FUNC void preprocess(int is_bof)
     char buf[1024], *q;
     Sym *s;
 
-    saved_parse_flags = parse_flags;
+    saved_parse_flags = parse_flags;    printf("保存之前的 flag, 给新的 flag\n");
     parse_flags = PARSE_FLAG_PREPROCESS
         | PARSE_FLAG_TOK_NUM
         | PARSE_FLAG_TOK_STR
@@ -2625,14 +2625,15 @@ maybe_newline:
         tok = TOK_LINEFEED;
         goto keep_tok_flags;
 
-    case '#':
+    case '#':   
+        printf("匹配到了# 这个符号，应该是一个宏定义了\n");
         /* XXX: simplify */
         PEEKC(c, p);
-        if ((tok_flags & TOK_FLAG_BOL) && 
-            (parse_flags & PARSE_FLAG_PREPROCESS)) {
+        if ((tok_flags & TOK_FLAG_BOL) && (parse_flags & PARSE_FLAG_PREPROCESS)) {
             tok_flags &= ~TOK_FLAG_BOL;
             file->buf_ptr = p;
-            preprocess(tok_flags & TOK_FLAG_BOF);
+            printf("当解析到这里的时候知道它是一个预处理的 token\n");
+            preprocess(tok_flags & TOK_FLAG_BOF);   // is_bof is true if first non space token at beginning of file
             p = file->buf_ptr;
             goto maybe_newline;
         } else {
@@ -2655,10 +2656,8 @@ maybe_newline:
     
     /* dollar is allowed to start identifiers when not parsing asm */
     case '$':
-        if (!(isidnum_table['$' - CH_EOF] & IS_ID)
-         || (parse_flags & PARSE_FLAG_ASM_FILE))
+        if (!(isidnum_table['$' - CH_EOF] & IS_ID) || (parse_flags & PARSE_FLAG_ASM_FILE))
             goto parse_simple;
-
     case 'a': case 'b': case 'c': case 'd':
     case 'e': case 'f': case 'g': case 'h':
     case 'i': case 'j': case 'k': case 'l':
@@ -2696,8 +2695,8 @@ maybe_newline:
                     goto token_found;
                 pts = &(ts->hash_next);
             }
-            ts = tok_alloc_new(pts, (char *) p1, len);
-        token_found: ;
+            ts = tok_alloc_new(pts, (char *) p1, len); printf("将从 p1 指针开始的 %d 个字符串复制过来\n", len);
+token_found: ;
         } else {
             /* slower case */
             cstr_reset(&tokcstr);
@@ -2712,7 +2711,7 @@ maybe_newline:
             }
             ts = tok_alloc(tokcstr.data, tokcstr.size);
         }
-        tok = ts->tok;
+        tok = ts->tok; printf("当前 token 的字符串是: %s\n", ts->str);
         break;
     case 'L':
         t = p[1];
@@ -2758,9 +2757,9 @@ maybe_newline:
         }
         /* We add a trailing '\0' to ease parsing */
         cstr_ccat(&tokcstr, '\0');
-        tokc.str.size = tokcstr.size;
+        tokc.str.size = tokcstr.size;   // tokc 是个全局的变量，类型是 CValue
         tokc.str.data = tokcstr.data;
-        tok = TOK_PPNUM;
+        tok = TOK_PPNUM;    // pre process 中的 number 类型的 token
         break;
 
     case '.':
@@ -2789,8 +2788,8 @@ maybe_newline:
     case '\'':
     case '\"':
         is_long = 0;
-    str_const:
-        cstr_reset(&tokcstr);
+str_const:
+        cstr_reset(&tokcstr); // 将当前的 token 重置
         if (is_long)
             cstr_ccat(&tokcstr, 'L');
         cstr_ccat(&tokcstr, c);
@@ -2947,7 +2946,13 @@ maybe_newline:
 keep_tok_flags:
     file->buf_ptr = p;
 #if defined(PARSE_DEBUG)
-    printf("token = %d %s\n", tok, get_tok_str(tok, &tokc));
+    printf("token = token 的类型: %d  token 的值: %s\n", tok, get_tok_str(tok, &tokc));
+    if (!strcmp("__BASE_FILE__", get_tok_str(tok, &tokc))) {
+        printf("base file \n");
+    }
+    if (!strcmp("main", get_tok_str(tok, &tokc))) {
+        printf("解析到 main 函数了。。。。。 \n");
+    }
 #endif
 }
 
@@ -3499,7 +3504,7 @@ redo:
     t = tok;
     if (t >= TOK_IDENT && (parse_flags & PARSE_FLAG_PREPROCESS)) {
         /* if reading from file, try to substitute macros */
-        Sym *s = define_find(t);
+        Sym *s = define_find(t);    // 尝试去定义的宏中去找
         if (s) {
             Sym *nested_list = NULL;
             macro_subst_tok(&tokstr_buf, &nested_list, s);
@@ -3587,50 +3592,52 @@ static void tcc_predefs(TCCState *s1, CString *cs, int is_asm)
 
 #ifdef TCC_TARGET_ARM
     if (s1->float_abi == ARM_HARD_FLOAT)
-      putdef(cs, "__ARM_PCS_VFP");
+        putdef(cs, "__ARM_PCS_VFP");
 #endif
     if (is_asm)
-      putdef(cs, "__ASSEMBLER__");
+        putdef(cs, "__ASSEMBLER__");
     if (s1->output_type == TCC_OUTPUT_PREPROCESS)
-      putdef(cs, "__TCC_PP__");
+        putdef(cs, "__TCC_PP__");
     if (s1->output_type == TCC_OUTPUT_MEMORY)
-      putdef(cs, "__TCC_RUN__");
+        putdef(cs, "__TCC_RUN__");
 #ifdef CONFIG_TCC_BACKTRACE
     if (s1->do_backtrace)
-      putdef(cs, "__TCC_BACKTRACE__");
+        putdef(cs, "__TCC_BACKTRACE__");
 #endif
 #ifdef CONFIG_TCC_BCHECK
     if (s1->do_bounds_check)
-      putdef(cs, "__TCC_BCHECK__");
+        putdef(cs, "__TCC_BCHECK__");
 #endif
     if (s1->char_is_unsigned)
-      putdef(cs, "__CHAR_UNSIGNED__");
+        putdef(cs, "__CHAR_UNSIGNED__");
     if (s1->optimize > 0)
-      putdef(cs, "__OPTIMIZE__");
+        putdef(cs, "__OPTIMIZE__");
     if (s1->option_pthread)
-      putdef(cs, "_REENTRANT");
+        putdef(cs, "_REENTRANT");
     if (s1->leading_underscore)
-      putdef(cs, "__leading_underscore");
+        putdef(cs, "__leading_underscore");
     cstr_printf(cs, "#define __SIZEOF_POINTER__ %d\n", PTR_SIZE);
     cstr_printf(cs, "#define __SIZEOF_LONG__ %d\n", LONG_SIZE);
     if (!is_asm) {
-      putdef(cs, "__STDC__");
-      cstr_printf(cs, "#define __STDC_VERSION__ %dL\n", s1->cversion);
-      cstr_cat(cs,
+        putdef(cs, "__STDC__");
+        cstr_printf(cs, "#define __STDC_VERSION__ %dL\n", s1->cversion);
+        cstr_cat(cs,
         /* load more predefs and __builtins */
 #if CONFIG_TCC_PREDEFS
-        #include "tccdefs_.h" /* include as strings */
+            #include "tccdefs_.h" /* include as strings */
 #else
-        "#include <tccdefs.h>\n" /* load at runtime */
+            "#include <tccdefs.h>\n" /* load at runtime */
 #endif
         , -1);
     }
+    // 将这个宏加入到文件 buffer 中去
     cstr_printf(cs, "#define __BASE_FILE__ \"%s\"\n", file->filename);
+    printf("文件内容>>>>>>>>>>>>>>>>>>>>>\n%s\n", file->buf_ptr);
 }
 
 ST_FUNC void preprocess_start(TCCState *s1, int filetype)
 {
-    int is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP));
+    int is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP)); // 判断当前的文件类型是否是汇编文件
 
     tccpp_new(s1);
 
@@ -3651,13 +3658,14 @@ ST_FUNC void preprocess_start(TCCState *s1, int filetype)
         cstr_new(&cstr);
         tcc_predefs(s1, &cstr, is_asm);
         if (s1->cmdline_defs.size)
-          cstr_cat(&cstr, s1->cmdline_defs.data, s1->cmdline_defs.size);
+            cstr_cat(&cstr, s1->cmdline_defs.data, s1->cmdline_defs.size);
         if (s1->cmdline_incl.size)
-          cstr_cat(&cstr, s1->cmdline_incl.data, s1->cmdline_incl.size);
+            cstr_cat(&cstr, s1->cmdline_incl.data, s1->cmdline_incl.size);
         //printf("%.*s\n", cstr.size, (char*)cstr.data);
         *s1->include_stack_ptr++ = file;
         tcc_open_bf(s1, "<command line>", cstr.size);
-        memcpy(file->buffer, cstr.data, cstr.size);
+        memcpy(file->buffer, cstr.data, cstr.size); // 将这个玩意儿复制进来
+        printf("file buffer is %s\n", file->buffer);
         cstr_free(&cstr);
     }
     parse_flags = is_asm ? PARSE_FLAG_ASM_FILE : 0;
@@ -3681,27 +3689,23 @@ ST_FUNC int set_idnum(int c, int val)
     return prev;
 }
 
-ST_FUNC void tccpp_new(TCCState *s)
+ST_FUNC void tccpp_new(TCCState *s) // TODO 这个是干啥的？
 {
     int i, c;
     const char *p, *r;
 
-    /* init isid table */
+    /* init isid table */   // 初始化 isid table
     for(i = CH_EOF; i<128; i++)
-        set_idnum(i,
-            is_space(i) ? IS_SPC
-            : isid(i) ? IS_ID
-            : isnum(i) ? IS_NUM
-            : 0);
+        set_idnum(i, is_space(i) ? IS_SPC : isid(i) ? IS_ID : isnum(i) ? IS_NUM : 0);
 
     for(i = 128; i<256; i++)
         set_idnum(i, IS_ID);
 
-    /* init allocators */
+    /* init allocators */   // 初始化分配器
     tal_new(&toksym_alloc, TOKSYM_TAL_LIMIT, TOKSYM_TAL_SIZE);
     tal_new(&tokstr_alloc, TOKSTR_TAL_LIMIT, TOKSTR_TAL_SIZE);
 
-    memset(hash_ident, 0, TOK_HASH_SIZE * sizeof(TokenSym *));
+    memset(hash_ident, 0, TOK_HASH_SIZE * sizeof(TokenSym *));  // 缓存的 hash
     memset(s->cached_includes_hash, 0, sizeof s->cached_includes_hash);
 
     cstr_new(&tokcstr);
@@ -3779,12 +3783,12 @@ static void tok_print(const int *str, const char *msg, ...)
 
     s = t0 = 0;
     while (str) {
-	TOK_GET(&t, &str, &cval);
-	if (t == 0 || t == TOK_EOF)
-	    break;
+	    TOK_GET(&t, &str, &cval);
+	    if (t == 0 || t == TOK_EOF)
+	        break;
         if (pp_need_space(t0, t))
             s = 0;
-	fprintf(fp, &" %s"[s], t == TOK_PLCHLDR ? "<>" : get_tok_str(t, &cval));
+	    fprintf(fp, &" %s"[s], t == TOK_PLCHLDR ? "<>" : get_tok_str(t, &cval));
         s = 1, t0 = t;
     }
     fprintf(fp, "\n");

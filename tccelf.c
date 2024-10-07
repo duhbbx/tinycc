@@ -144,7 +144,7 @@ ST_FUNC void tccelf_delete(TCCState *s1)
 /* save section data state */
 ST_FUNC void tccelf_begin_file(TCCState *s1)
 {
-    Section *s; int i;
+    Section *s; int i; printf("这个又是啥呢？ ELF 不是 linux 下的吗？s1->nb_sections = %\n", s1->nb_sections);
     for (i = 1; i < s1->nb_sections; i++) {
         s = s1->sections[i];
         s->sh_offset = s->data_offset;

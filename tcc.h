@@ -1336,10 +1336,12 @@ ST_FUNC int normalized_PATHCMP(const char *f1, const char *f2);
 
 ST_DATA struct BufferedFile *file;
 ST_DATA int tok;
-ST_DATA CValue tokc;
+ST_DATA CValue tokc;    // 这又是一个全局变量擦了
 ST_DATA const int *macro_ptr;
 ST_DATA int parse_flags;
 ST_DATA int tok_flags;
+
+// 这个里面记录的是当前解析的字符串
 ST_DATA CString tokcstr; /* current parsed string, if any */
 
 /* display benchmark infos */
@@ -1984,3 +1986,15 @@ ST_FUNC void post_sem(TCCSem *p)
 }
 #endif
 #endif
+
+
+/**
+ * add by yangxu, 用于打印 sym 的详情
+ */
+void print_sym(Sym *sym);
+
+
+// 假设你已经定义了 Sym 结构体，并且有打印符号信息的相关函数
+
+// 打印从第一个节点开始到最后一个节点的符号信息
+void print_sym_chain(Sym *sym);

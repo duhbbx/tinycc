@@ -702,8 +702,15 @@ ST_FUNC void tcc_close(void)
     }
     if (bf->true_filename != bf->filename)
         tcc_free(bf->true_filename);
+
+    char * old_filename = bf->filename;
     file = bf->prev;
+    char * new_filename = file->filename;
+    printf("上一个解析的文件名: %s, 下一个文件名: %s\n", old_filename, new_filename);
     tok_flags = bf->prev_tok_flags;
+    if (!strcmp("a.c", new_filename)) {
+        printf("解析到我写的文件了............%s\n", new_filename);
+    }
     tcc_free(bf);
 }
 
@@ -762,16 +769,16 @@ static int tcc_compile(TCCState *s1, int filetype, const char *str, int fd)
         tccgen_init(s1);
 
         if (s1->output_type == TCC_OUTPUT_PREPROCESS) {
-		printf("#### tcc compile   tcc_preprocess........\n");
+		    printf("#### tcc compile   tcc_preprocess........\n");
             tcc_preprocess(s1);
         } else {
-		printf("#### tcc compile   tccelf_begin_file........\n");
+		    printf("#### tcc compile   tccelf_begin_file........\n");
             tccelf_begin_file(s1);
             if (filetype & (AFF_TYPE_ASM | AFF_TYPE_ASMPP)) {
+                printf("文件类型是汇编\n");
                 tcc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
             } else {
-
-		    printf("#### tcc compile   tccgen_compile........\n");
+		        printf("#### tcc compile   tccgen_compile........\n");
                 tccgen_compile(s1);
             }
             tccelf_end_file(s1);
@@ -1017,8 +1024,7 @@ ST_FUNC int tcc_add_file_internal(TCCState *s1, const char *filename, int flags)
 #endif
 
     /* ignore binary files with -E */
-    if (s1->output_type == TCC_OUTPUT_PREPROCESS
-        && (flags & AFF_TYPE_BIN))
+    if (s1->output_type == TCC_OUTPUT_PREPROCESS && (flags & AFF_TYPE_BIN))
         return 0;
 
     /* open the file */
@@ -1120,7 +1126,7 @@ check_success:
     } else {
         /* update target deps */
         dynarray_add(&s1->target_deps, &s1->nb_target_deps, tcc_strdup(filename));
-	printf("tcc_add_file_internal 感觉到了这里就是对文件进行编译了...... %s\n", filename);
+	    printf("tcc_compile 感觉到了这里就是对文件进行编译了...... %s\n", filename);
         ret = tcc_compile(s1, flags, filename, fd);
     }
     s1->current_filename = NULL;
@@ -1135,16 +1141,14 @@ LIBTCCAPI int tcc_add_file(TCCState *s, const char *filename)
         /* use a file extension to detect a filetype */
         const char *ext = tcc_fileextension(filename);
 
-	printf("获取 文件的后缀名..... %s\n", ext);
+	    printf("获取 文件的后缀名..... %s\n", ext);
         if (ext[0]) {
             ext++;
             if (!strcmp(ext, "S"))
                 filetype = AFF_TYPE_ASMPP;
             else if (!strcmp(ext, "s"))
                 filetype = AFF_TYPE_ASM;
-            else if (!PATHCMP(ext, "c")
-                     || !PATHCMP(ext, "h")
-                     || !PATHCMP(ext, "i"))
+            else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "h") || !PATHCMP(ext, "i"))
                 filetype = AFF_TYPE_C;
             else
                 filetype |= AFF_TYPE_BIN;

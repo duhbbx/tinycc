@@ -375,9 +375,9 @@ ST_FUNC void tccgen_init(TCCState *s1)
     func_old_type.ref->f.func_call = FUNC_CDECL;
     func_old_type.ref->f.func_type = FUNC_OLD;
 #ifdef precedence_parser
-    init_prec();
+    init_prec();        // 初始化运算符的优先级，就是将它使用数组缓存起来，key 是 token， value 是优先级
 #endif
-    cstr_new(&initstr);
+    cstr_new(&initstr); // TODO 暂时不知道这个 initstr 是干啥的
 }
 
 ST_FUNC int tccgen_compile(TCCState *s1)
@@ -399,8 +399,9 @@ ST_FUNC int tccgen_compile(TCCState *s1)
 #endif
     parse_flags = PARSE_FLAG_PREPROCESS | PARSE_FLAG_TOK_NUM | PARSE_FLAG_TOK_STR;
 
-	printf("#### next() 是干啥的.........\n");
-    next();
+	printf("#### next() 是干啥的........., 灵魂函数 next \n");
+    printf("buf content: %s\n", file->buf_ptr);
+    next(); // 就是不知道这个 next 是怎么进来的，可能是遇到了 int 吗
     decl(VT_CONST);
     gen_inline_functions(s1);
     check_vstack();
@@ -4598,12 +4599,12 @@ static int parse_btype(CType *type, AttributeDef *ad, int ignore_label)
     memset(ad, 0, sizeof(AttributeDef));
     type_found = 0;
     typespec_found = 0;
-    t = VT_INT;
+    t = VT_INT; // YANGXU: #define VT_INT              3  /* integer type */
     bt = st = -1;
     type->ref = NULL;
 
     while(1) {
-        switch(tok) {
+        switch(tok) {   // ST_DATA int tok; 全局的静态变量
         case TOK_EXTENSION:
             /* currently, we really ignore extension */
             next();
@@ -4851,7 +4852,7 @@ the_end:
     if (bt == VT_LDOUBLE)
         t = (t & ~(VT_BTYPE|VT_LONG)) | (VT_DOUBLE|VT_LONG);
 #endif
-    type->t = t;
+    type->t = t;    // type 是之前定义的 CType
     return type_found;
 }
 
@@ -4903,17 +4904,17 @@ static int post_type(CType *type, AttributeDef *ad, int storage, int td)
     if (tok == '(') {
         /* function type, or recursive declarator (return if so) */
         next();
-	if (TYPE_DIRECT == (td & (TYPE_DIRECT|TYPE_ABSTRACT)))
-	  return 0;
-	if (tok == ')')
-	  l = 0;
-	else if (parse_btype(&pt, &ad1, 0))
-	  l = FUNC_NEW;
-	else if (td & (TYPE_DIRECT|TYPE_ABSTRACT)) {
-	    merge_attr (ad, &ad1);
-	    return 0;
-	} else
-	  l = FUNC_OLD;
+        if (TYPE_DIRECT == (td & (TYPE_DIRECT|TYPE_ABSTRACT)))
+            return 0;
+        if (tok == ')')
+            l = 0;    // VT_VOID, void 类型的
+        else if (parse_btype(&pt, &ad1, 0))
+            l = FUNC_NEW;
+        else if (td & (TYPE_DIRECT|TYPE_ABSTRACT)) {
+            merge_attr (ad, &ad1);
+            return 0;
+        } else
+            l = FUNC_OLD;
 
         first = NULL;
         plast = &first;
@@ -4954,12 +4955,12 @@ static int post_type(CType *type, AttributeDef *ad, int storage, int td)
                     next();
                     break;
                 }
-		if (l == FUNC_NEW && !parse_btype(&pt, &ad1, 0))
-		    tcc_error("invalid type");
+		        if (l == FUNC_NEW && !parse_btype(&pt, &ad1, 0))
+		            tcc_error("invalid type");
             }
         } else
             /* if no parameters, then old type prototype */
-            l = FUNC_OLD;
+            l = FUNC_OLD;   // void 的参数类型
         skip(')');
         /* remove parameter symbols from token table, keep on stack */
         if (first) {
@@ -4989,53 +4990,57 @@ static int post_type(CType *type, AttributeDef *ad, int storage, int td)
         type->t = VT_FUNC;
         type->ref = s;
     } else if (tok == '[') {
-	int saved_nocode_wanted = nocode_wanted;
+	    int saved_nocode_wanted = nocode_wanted;
         /* array definition */
         next();
         n = -1;
         t1 = 0;
-        if (td & TYPE_PARAM) while (1) {
-	    /* XXX The optional type-quals and static should only be accepted
-	       in parameter decls.  The '*' as well, and then even only
-	       in prototypes (not function defs).  */
-	    switch (tok) {
-	    case TOK_RESTRICT1: case TOK_RESTRICT2: case TOK_RESTRICT3:
-	    case TOK_CONST1:
-	    case TOK_VOLATILE1:
-	    case TOK_STATIC:
-	    case '*':
-		next();
-		continue;
-	    default:
-		break;
-	    }
-            if (tok != ']') {
-		/* Code generation is not done now but has to be done
-		   at start of function. Save code here for later use. */
-	        nocode_wanted = 1;
-		skip_or_save_block(&vla_array_tok);
-		unget_tok(0);
-		vla_array_str = vla_array_tok->str;
-		begin_macro(vla_array_tok, 2);
-		next();
-	        gexpr();
-		end_macro();
-		next();
-		goto check;
-            }
-            break;
-
-	} else if (tok != ']') {
+        if (td & TYPE_PARAM) 
+            while (1) {
+                /* XXX The optional type-quals and static should only be accepted
+                in parameter decls.  The '*' as well, and then even only
+                in prototypes (not function defs).  */
+                switch (tok) {
+                    case TOK_RESTRICT1: 
+                    case TOK_RESTRICT2: 
+                    case TOK_RESTRICT3:
+                    case TOK_CONST1:
+                    case TOK_VOLATILE1:
+                    case TOK_STATIC:
+                    case '*':
+                        next();
+                        continue;
+                    default:
+                        break;
+                }
+                
+                if (tok != ']') {
+                    /* Code generation is not done now but has to be done
+                    at start of function. Save code here for later use. */
+                    nocode_wanted = 1;
+                    skip_or_save_block(&vla_array_tok);
+                    unget_tok(0);
+                    vla_array_str = vla_array_tok->str;
+                    begin_macro(vla_array_tok, 2);
+                    next();
+                    gexpr();
+                    end_macro();
+                    next();
+                    goto check;
+                }
+                break;
+            } 
+        else if (tok != ']') {
             if (!local_stack || (storage & VT_STATIC))
                 vpushi(expr_const());
             else {
-		/* VLAs (which can only happen with local_stack && !VT_STATIC)
-		   length must always be evaluated, even under nocode_wanted,
-		   so that its size slot is initialized (e.g. under sizeof
-		   or typeof).  */
-		nocode_wanted = 0;
-		gexpr();
-	    }
+                /* VLAs (which can only happen with local_stack && !VT_STATIC)
+                length must always be evaluated, even under nocode_wanted,
+                so that its size slot is initialized (e.g. under sizeof
+                or typeof).  */
+                nocode_wanted = 0;
+                gexpr();
+            }
 check:
             if ((vtop->r & (VT_VALMASK | VT_LVAL | VT_SYM)) == VT_CONST) {
                 n = vtop->c.i;
@@ -5164,17 +5169,16 @@ static CType *type_decl(CType *type, AttributeDef *ad, int *v, int td)
 	} else
 	  goto abstract;
     } else if (tok >= TOK_IDENT && (td & TYPE_DIRECT)) {
-	/* type identifier */
-	*v = tok;
-	next();
+	    /* type identifier */
+	    *v = tok;
+	    next();
     } else {
-  abstract:
-	if (!(td & TYPE_ABSTRACT))
-	  expect("identifier");
-	*v = 0;
+abstract:
+	    if (!(td & TYPE_ABSTRACT))
+	        expect("identifier");
+	    *v = 0;
     }
-    post_type(post, ad, post != ret ? 0 : storage,
-              td & ~(TYPE_DIRECT|TYPE_ABSTRACT));
+    post_type(post, ad, post != ret ? 0 : storage, td & ~(TYPE_DIRECT|TYPE_ABSTRACT));
     parse_attribute(ad);
     type->t |= storage;
     return ret;
@@ -6313,16 +6317,32 @@ static void expr_lor(void)
 static int precedence(int tok)
 {
     switch (tok) {
-        case TOK_LOR: return 1;
-        case TOK_LAND: return 2;
-	case '|': return 3;
-	case '^': return 4;
-	case '&': return 5;
-	case TOK_EQ: case TOK_NE: return 6;
- relat: case TOK_ULT: case TOK_UGE: return 7;
-	case TOK_SHL: case TOK_SAR: return 8;
-	case '+': case '-': return 9;
-	case '*': case '/': case '%': return 10;
+        case TOK_LOR: 
+            return 1;
+        case TOK_LAND: 
+            return 2;
+	    case '|': 
+            return 3;
+	    case '^': 
+            return 4;
+	    case '&': 
+            return 5;
+	    case TOK_EQ: 
+        case TOK_NE: 
+            return 6;
+ relat: case TOK_ULT: 
+        case TOK_UGE: 
+            return 7;
+	    case TOK_SHL: 
+        case TOK_SAR: 
+            return 8;
+	    case '+': 
+        case '-': 
+            return 9;
+        case '*': 
+        case '/': 
+        case '%': 
+            return 10;
 	default:
 	    if (tok >= TOK_ULE && tok <= TOK_GT)
 	        goto relat;
@@ -6333,8 +6353,11 @@ static unsigned char prec[256];
 static void init_prec(void)
 {
     int i;
-    for (i = 0; i < 256; i++)
-	prec[i] = precedence(i);
+    for (i = 0; i < 256; i++) {
+        // precedence 使用来计算 token 的优先级的
+        // 这里相当于提前缓存了 token 的优先级了？
+	    prec[i] = precedence(i);
+    }
 }
 #define precedence(i) ((unsigned)i < 256 ? prec[i] : 0)
 
@@ -8299,7 +8322,7 @@ static void func_vla_arg(Sym *sym)
 }
 
 /* parse a function defined by symbol 'sym' and generate its code in
-   'cur_text_section' */
+   'cur_text_section', 我尼玛的，你真是牛逼，直接就准备生成代码了？ */
 static void gen_function(Sym *sym)
 {
     struct scope f = { 0 };
@@ -8309,9 +8332,8 @@ static void gen_function(Sym *sym)
     cur_text_section->sh_flags |= SHF_EXECINSTR;
     ind = cur_text_section->data_offset;
     if (sym->a.aligned) {
-	size_t newoff = section_add(cur_text_section, 0,
-				    1 << (sym->a.aligned - 1));
-	gen_fill_nops(newoff - ind);
+	    size_t newoff = section_add(cur_text_section, 0, 1 << (sym->a.aligned - 1));
+	    gen_fill_nops(newoff - ind);
     }
 
     funcname = get_tok_str(sym->v, NULL);
@@ -8441,10 +8463,15 @@ static void do_Static_assert(void)
    or VT_JMP if parsing c99 for decl: for (int i = 0, ...) */
 static int decl(int l)
 {
+    // l 是传参，不知道是啥
     int v, has_init, r, oldint;
     CType type, btype;
     Sym *sym;
     AttributeDef ad, adbase;
+
+    if (!strcmp(file->filename, "a.c")) {
+        printf("解析到我的文件了: %s\n", file->filename);
+    }
 
     while (1) {
 
@@ -8481,13 +8508,14 @@ static int decl(int l)
         }
 
         if (tok == ';') {
-	    if ((btype.t & VT_BTYPE) == VT_STRUCT) {
-		v = btype.ref->v;
-		if (!(v & SYM_FIELD) && (v & ~SYM_STRUCT) >= SYM_FIRST_ANOM)
-        	    tcc_warning("unnamed struct/union that defines no instances");
+            if ((btype.t & VT_BTYPE) == VT_STRUCT) {
+                v = btype.ref->v;
+                if (!(v & SYM_FIELD) && (v & ~SYM_STRUCT) >= SYM_FIRST_ANOM)
+                    tcc_warning("unnamed struct/union that defines no instances");
                 next();
                 continue;
-	    }
+            }
+            
             if (IS_ENUM(btype.t)) {
                 next();
                 continue;
@@ -8496,7 +8524,7 @@ static int decl(int l)
 
         while (1) { /* iterate thru each declaration */
             type = btype;
-	    ad = adbase;
+	        ad = adbase;
             type_decl(&type, &ad, &v, TYPE_DIRECT);
 #if 0
             {
@@ -8508,17 +8536,14 @@ static int decl(int l)
             if ((type.t & VT_BTYPE) == VT_FUNC) {
                 if ((type.t & VT_STATIC) && (l != VT_CONST))
                     tcc_error("function without file scope cannot be static");
-                /* if old style function prototype, we accept a
-                   declaration list */
+                /* if old style function prototype, we accept a declaration list */
                 sym = type.ref;
                 if (sym->f.func_type == FUNC_OLD && l == VT_CONST) {
                     func_vt = type;
                     decl(VT_CMP);
                 }
 #if defined TCC_TARGET_MACHO || defined TARGETOS_ANDROID
-                if (sym->f.func_alwinl
-                    && ((type.t & (VT_EXTERN | VT_INLINE))
-                        == (VT_EXTERN | VT_INLINE))) {
+                if (sym->f.func_alwinl && ((type.t & (VT_EXTERN | VT_INLINE)) == (VT_EXTERN | VT_INLINE))) {
                     /* always_inline functions must be handled as if they
                        don't generate multiple global defs, even if extern
                        inline, i.e. GNU inline semantics for those.  Rewrite
@@ -8552,9 +8577,8 @@ static int decl(int l)
                 if (type.t & VT_STATIC)
                     tcc_error("cannot have dll linkage with static");
                 if (type.t & VT_TYPEDEF) {
-                    tcc_warning("'%s' attribute ignored for typedef",
-                        ad.a.dllimport ? (ad.a.dllimport = 0, "dllimport") :
-                        (ad.a.dllexport = 0, "dllexport"));
+                    tcc_warning("'%s' attribute ignored for typedef", 
+                        ad.a.dllimport ? (ad.a.dllimport = 0, "dllimport") : (ad.a.dllexport = 0, "dllexport"));
                 } else if (ad.a.dllimport) {
                     if ((type.t & VT_BTYPE) == VT_FUNC)
                         ad.a.dllimport = 0;
@@ -8571,6 +8595,7 @@ static int decl(int l)
 
                 /* reject abstract declarators in function definition
                    make old style params without decl have int type */
+                // type.ref 是哪儿来的啊？
                 sym = type.ref;
                 while ((sym = sym->next) != NULL) {
                     if (!(sym->v & ~SYM_FIELD))
@@ -8594,55 +8619,50 @@ static int decl(int l)
                     fn = tcc_malloc(sizeof *fn + strlen(file->filename));
                     strcpy(fn->filename, file->filename);
                     fn->sym = sym;
-                    dynarray_add(&tcc_state->inline_fns,
-				 &tcc_state->nb_inline_fns, fn);
+                    dynarray_add(&tcc_state->inline_fns, &tcc_state->nb_inline_fns, fn);
                     skip_or_save_block(&fn->func_str);
                 } else {
                     /* compute text section */
                     cur_text_section = ad.section;
                     if (!cur_text_section)
                         cur_text_section = text_section;
+                    printf("准备生成函数了...................\n");
                     gen_function(sym);
                 }
                 break;
             } else {
-		if (l == VT_CMP) {
-		    /* find parameter in function parameter list */
-		    for (sym = func_vt.ref->next; sym; sym = sym->next)
-			if ((sym->v & ~SYM_FIELD) == v)
-			    goto found;
-		    tcc_error("declaration for parameter '%s' but no such parameter",
-			      get_tok_str(v, NULL));
-                found:
-		    if (type.t & VT_STORAGE) /* 'register' is okay */
-		        tcc_error("storage class specified for '%s'",
-				  get_tok_str(v, NULL));
-		    if (sym->type.t != VT_VOID)
-		        tcc_error("redefinition of parameter '%s'",
-				  get_tok_str(v, NULL));
-		    convert_parameter_type(&type);
-		    sym->type = type;
-		} else if (type.t & VT_TYPEDEF) {
+                if (l == VT_CMP) {
+                    /* find parameter in function parameter list */
+                    for (sym = func_vt.ref->next; sym; sym = sym->next)
+                    if ((sym->v & ~SYM_FIELD) == v)
+                        goto found;
+                    tcc_error("declaration for parameter '%s' but no such parameter", get_tok_str(v, NULL));
+found:
+                    if (type.t & VT_STORAGE) /* 'register' is okay */
+                        tcc_error("storage class specified for '%s'",
+                        get_tok_str(v, NULL));
+                    if (sym->type.t != VT_VOID)
+                        tcc_error("redefinition of parameter '%s'", get_tok_str(v, NULL));
+                    convert_parameter_type(&type);
+                    sym->type = type;
+                } else if (type.t & VT_TYPEDEF) {
                     /* save typedefed type  */
                     /* XXX: test storage specifiers ? */
                     sym = sym_find(v);
                     if (sym && sym->sym_scope == local_scope) {
-                        if (!is_compatible_types(&sym->type, &type)
-                            || !(sym->type.t & VT_TYPEDEF))
-                            tcc_error("incompatible redefinition of '%s'",
-                                get_tok_str(v, NULL));
+                        if (!is_compatible_types(&sym->type, &type) || !(sym->type.t & VT_TYPEDEF))
+                            tcc_error("incompatible redefinition of '%s'", get_tok_str(v, NULL));
                         sym->type = type;
                     } else {
                         sym = sym_push(v, &type, 0, 0);
                     }
                     sym->a = ad.a;
                     if ((type.t & VT_BTYPE) == VT_FUNC)
-                      merge_funcattr(&sym->type.ref->f, &ad.f);
+                        merge_funcattr(&sym->type.ref->f, &ad.f);
                     if (debug_modes)
                         tcc_debug_typedef (tcc_state, sym);
-		} else if ((type.t & VT_BTYPE) == VT_VOID
-			   && !(type.t & VT_EXTERN)) {
-		    tcc_error("declaration of void object");
+                } else if ((type.t & VT_BTYPE) == VT_VOID && !(type.t & VT_EXTERN)) {
+                    tcc_error("declaration of void object");
                 } else {
                     r = 0;
                     if ((type.t & VT_BTYPE) == VT_FUNC) {
@@ -8657,10 +8677,9 @@ static int decl(int l)
                     if (has_init && (type.t & VT_VLA))
                         tcc_error("variable length array cannot be initialized");
 
-                    if (((type.t & VT_EXTERN) && (!has_init || l != VT_CONST))
-		        || (type.t & VT_BTYPE) == VT_FUNC
+                    if (((type.t & VT_EXTERN) && (!has_init || l != VT_CONST)) || (type.t & VT_BTYPE) == VT_FUNC
                         /* as with GCC, uninitialized global arrays with no size
-                           are considered extern: */
+                            are considered extern: */
                         || ((type.t & VT_ARRAY) && !has_init
                             && l == VT_CONST && type.ref->c < 0)
                         ) {
@@ -8682,10 +8701,10 @@ static int decl(int l)
 
                     if (ad.alias_target && l == VT_CONST) {
                         /* Aliases need to be emitted when their target symbol
-                           is emitted, even if perhaps unreferenced.
-                           We only support the case where the base is already
-                           defined, otherwise we would need deferring to emit
-                           the aliases until the end of the compile unit.  */
+                            is emitted, even if perhaps unreferenced.
+                            We only support the case where the base is already
+                            defined, otherwise we would need deferring to emit
+                            the aliases until the end of the compile unit.  */
                         Sym *alias_target = sym_find(ad.alias_target);
                         ElfSym *esym = elfsym(alias_target);
                         if (!esym)
@@ -8694,16 +8713,18 @@ static int decl(int l)
                                         esym->st_value, esym->st_size, 1);
                     }
                 }
-                if (tok != ',') {
-                    if (l == VT_JMP)
-                        return 1;
-                    skip(';');
-                    break;
+                    if (tok != ',') {
+                        if (l == VT_JMP)
+                            return 1;
+                        skip(';');
+                        break;
+                    }
+                    next();
                 }
-                next();
-            }
         }
     }
+
+    // print_sym_chain(sym);
     return 0;
 }
 

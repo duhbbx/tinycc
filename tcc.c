@@ -286,20 +286,28 @@ int main(int argc0, char **argv0)
     unsigned start_time = 0, end_time = 0;
     const char *first_file;
     int argc; char **argv;
-    FILE *ppfp = stdout;  printf("ppfp 是啥,为什么取这个名字: ppfp 是指向 stdcout 的文件指针\n");
+    FILE *ppfp = stdout;
+    printf("ppfp 是啥,为什么取这个名字: ppfp 是指向 stdcout 的文件指针\n");
 
 
 
 redo: /* 使用了 label, why */
     argc = argc0, argv = argv0;
-    s = s1 = tcc_new();  printf("#### tcc state 的状态使用 tcc_new() >>>>>>>>> \n");
+    s = s1 = tcc_new();
+    printf("#### tcc state 的状态使用 tcc_new() >>>>>>>>> \n");
 #ifdef CONFIG_TCC_SWITCHES /* predefined options */
-    tcc_set_options(s, CONFIG_TCC_SWITCHES);   printf("#### tcc_set_options, 这个 options 是什么呢?\n");
+    tcc_set_options(s, CONFIG_TCC_SWITCHES);
+    printf("#### tcc_set_options, 这个 options 是什么呢?\n");
 #endif
-    opt = tcc_parse_args(s, &argc, &argv, 1);  printf("#### 解析 tcc 的参数 tcc_parse_args \n");
-    if (opt < 0) { printf("命令行参数解析错误\n"); return 1;}
+    opt = tcc_parse_args(s, &argc, &argv, 1);
+    printf("#### 解析 tcc 的参数 tcc_parse_args \n");
+    if (opt < 0) { 
+        printf("命令行参数解析错误\n"); 
+        return 1;
+    }
 
-    if (n == 0) { printf("命令行解析的参数 为 0 个则打印帮助语句\n");
+    if (n == 0) {
+        printf("命令行解析的参数 为 0 个则打印帮助语句\n");
         if (opt == OPT_HELP) {
             fputs(help, stdout);
             if (!s->verbose)
@@ -332,13 +340,15 @@ redo: /* 使用了 label, why */
         printf("##### 一共有多少个输入文件呢? %d 个\n", s->nb_files);
         if (s->nb_files == 0) {
             tcc_error_noabort("no input files");
-        } else if (s->output_type == TCC_OUTPUT_PREPROCESS) { printf("tcc.c 只是进行预处理..................\n");
+        } else if (s->output_type == TCC_OUTPUT_PREPROCESS) { 
+            printf("tcc.c 只是进行预处理..................\n");
             if (s->outfile && 0!=strcmp("-",s->outfile)) {
                 ppfp = fopen(s->outfile, "wb");
                 if (!ppfp)
                     tcc_error_noabort("could not write '%s'", s->outfile);
             }
-        } else if (s->output_type == TCC_OUTPUT_OBJ && !s->option_r) { printf("生成的是目标文件................\n");
+        } else if (s->output_type == TCC_OUTPUT_OBJ && !s->option_r) { 
+            printf("生成的是目标文件................\n");
             if (s->nb_libraries)
                 tcc_error_noabort("cannot specify libraries with -c");
             else if (s->nb_files > 1 && s->outfile) {
@@ -350,8 +360,10 @@ redo: /* 使用了 label, why */
         printf("##### 所以 opt 返回值是啥呢？ ====> %d\n", opt);
         if (s->nb_errors)
             return 1;
-        if (s->do_bench) { printf("有 bench 标识, 准备记录起始时间了");
-            start_time = getclock_ms(); }
+        if (s->do_bench) { 
+            printf("有 bench 标识, 准备记录起始时间了");
+            start_time = getclock_ms();
+        }
     }
 
     set_environment(s);
@@ -361,9 +373,8 @@ redo: /* 使用了 label, why */
     s->ppfp = ppfp;
 
     // 如果输出是在内存里面或者预处理的话，做了 blabla......
-    if ((s->output_type == TCC_OUTPUT_MEMORY
-      || s->output_type == TCC_OUTPUT_PREPROCESS)
-        && (s->dflag & 16)) { /* -dt option */
+    if ((s->output_type == TCC_OUTPUT_MEMORY || s->output_type == TCC_OUTPUT_PREPROCESS) && (s->dflag & 16)) { 
+        /* -dt option */
         if (t)
             s->dflag |= 32;
         s->run_test = ++t;
@@ -377,19 +388,23 @@ redo: /* 使用了 label, why */
         struct filespec *f = s->files[n];
         s->filetype = f->type;
         printf("#### 编译单个文件 -> %s\n", f->name);
-        if (f->type & AFF_TYPE_LIB) { printf("AFF_TYPE_LIB类型......... 使用枚举来判断\n");
+        if (f->type & AFF_TYPE_LIB) {
+            printf("AFF_TYPE_LIB类型......... 使用枚举来判断\n");
             ret = tcc_add_library_err(s, f->name);
         } else {
             if (1 == s->verbose)
                 printf("-> %s\n", f->name);
             if (!first_file)        // 为什么要有 first_file 呢?
                 first_file = f->name;
-            ret = tcc_add_file(s, f->name);  printf("tcc_add_file 是干啥的...........\n");
+            ret = tcc_add_file(s, f->name);
+            printf("tcc_add_file 是干啥的..........., %s\n", f->name);
         }
-        done = ret || ++n >= s->nb_files;  printf("判断是否 done了..................\n");
+        done = ret || ++n >= s->nb_files;
+        printf("判断是否 done了..................\n");
     } while (!done && (s->output_type != TCC_OUTPUT_OBJ || s->option_r));
 
-    if (s->do_bench) { printf("判断是否是 bench, 如果是的话计算时间");
+    if (s->do_bench) {
+        printf("判断是否是 bench, 如果是的话计算时间");
         end_time = getclock_ms();
     }
         
@@ -423,10 +438,98 @@ redo: /* 使用了 label, why */
     else if (s->do_bench)
         tcc_print_stats(s, end_time - start_time);
     tcc_delete(s);
-    if (!done) {  printf("#### 没有完成,跳转到 redo 继续.........\n");
+    if (!done) {
+        printf("#### 没有完成,跳转到 redo 继续.........\n");
         goto redo;}
     if (ppfp && ppfp != stdout)
         fclose(ppfp);
     printf("编译结束了....... 返回的结果是 %d, 是否成功: %s\n", ret, ret ? "失败" : "成功");
     return ret;
+}
+
+
+
+
+/**
+ * add by yangxu, 用于打印 sym 的详情
+ */
+void print_sym(Sym *sym) {
+    if (!sym) {
+        printf("Symbol is NULL\n");
+        return;
+    }
+    
+    printf("Symbol Information:\n");
+    printf("Token (v): %d\n", sym->v);
+    printf("Register/Const/Local (r): %d\n", sym->r);
+    
+    // Symbol attributes
+    printf("Attributes:\n");
+    printf("  Aligned: %d\n", sym->a.aligned);
+    printf("  Packed: %d\n", sym->a.packed);
+    printf("  Weak: %d\n", sym->a.weak);
+    printf("  Visibility: %d\n", sym->a.visibility);
+    printf("  DLL Export: %d\n", sym->a.dllexport);
+    printf("  DLL Import: %d\n", sym->a.dllimport);
+    printf("  Address Taken: %d\n", sym->a.addrtaken);
+    printf("  No Debug: %d\n", sym->a.nodebug);
+    
+    // Associated number or function attributes
+    printf("Associated Number (c): %d\n", sym->c);
+    
+    // Function attributes, if available
+    printf("Function Attributes:\n");
+    printf("  Call Convention: %d\n", sym->f.func_call);
+    printf("  Function Type: %d\n", sym->f.func_type);
+    printf("  No Return: %d\n", sym->f.func_noreturn);
+    printf("  Constructor: %d\n", sym->f.func_ctor);
+    printf("  Destructor: %d\n", sym->f.func_dtor);
+    
+    // Type information
+    if (sym->type.ref) {
+        printf("Type Information:\n");
+        printf("  Type ID (t): %d\n", sym->type.t);
+        printf("  Type Ref Symbol Token: %d\n", sym->type.ref->v);
+    } else {
+        printf("Type Reference is NULL\n");
+    }
+    
+    // Previous symbol
+    if (sym->prev) {
+        printf("Previous Symbol Token: %d\n", sym->prev->v);
+    } else {
+        printf("No previous symbol in the stack.\n");
+    }
+    
+    // Previous token symbol
+    if (sym->prev_tok) {
+        printf("Previous Token Symbol: %d\n", sym->prev_tok->v);
+    } else {
+        printf("No previous token symbol.\n");
+    }
+}
+
+
+
+// 假设你已经定义了 Sym 结构体，并且有打印符号信息的相关函数
+
+// 打印从第一个节点开始到最后一个节点的符号信息
+void print_sym_chain(Sym *sym) {
+    // Step 1: 回溯到第一个节点
+    while (sym && sym->prev) {
+        sym = sym->prev;  // 通过 prev 指针回溯到第一个节点
+    }
+    
+    // Step 2: 从第一个节点开始打印
+    printf("Printing symbol chain from the first node:\n");
+    
+    while (sym) {
+        // 打印当前符号的信息
+        printf("Symbol token: %d\n", sym->v); // 打印符号的标记
+        // 你可以添加更多字段的打印逻辑，例如:
+        // printf("Symbol type: %d\n", sym->type.t);
+
+        // 移动到下一个符号
+        sym = sym->next; // 这里假设 next 链接到下一个相关符号
+    }
 }

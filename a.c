@@ -1,19 +1,8 @@
-#include <stdio.h>
 
-
-void print();
+#define a 100
 
 int main() {
 
-    int a = 0;
-
-
-    int b = a + 1;
-
-    print();
-
-
-    printf("hello, world\n");
-
-    return 0;
+    int b = a + 100;
+    return b;
 }
