@@ -2573,10 +2573,10 @@ static void next_nomacro(void)
         goto redo_no_start;
     case '\\':
         /* first look if it is in fact an end of buffer */
-        c = handle_stray(&p);
+        c = handle_stray(&p);   // 处理尾部的 \ 的情况，不用过多关注
         if (c == '\\')
             goto parse_simple;
-        if (c == CH_EOF) {
+        if (c == CH_EOF) {      // 达到文件尾部了
             TCCState *s1 = tcc_state;
             if (!(tok_flags & TOK_FLAG_BOL)) {
                 /* add implicit newline */
@@ -2585,9 +2585,9 @@ static void next_nomacro(void)
                 tok = TOK_EOF;
             } else if (s1->ifdef_stack_ptr != file->ifdef_stack_ptr) {
                 tcc_error("missing #endif");
-            } else if (s1->include_stack_ptr == s1->include_stack) {
+            } else if (s1->include_stack_ptr == s1->include_stack) {    // 没有更多的include了
                 /* no include left : end of file. */
-                tok = TOK_EOF;
+                tok = TOK_EOF;  // 文件尾部的 TOKEN
             } else {
                 /* pop include file */
 
@@ -2622,7 +2622,7 @@ maybe_newline:
         tok_flags |= TOK_FLAG_BOL;
         if (0 == (parse_flags & PARSE_FLAG_LINEFEED))
             goto redo_no_start;
-        tok = TOK_LINEFEED;
+        tok = TOK_LINEFEED;         // 将当前的 tok 设置为换行
         goto keep_tok_flags;
 
     case '#':   
@@ -3502,6 +3502,9 @@ redo:
 
     next_nomacro();
     t = tok;
+    // /* all identifiers and strings have token above that */
+    // #define TOK_IDENT 256 标识符和字符串都大于256 int 这种类型的关键字也是大于256的
+    // parse_flags & PARSE_FLAG_PREPROCESS 判断是否有预处理
     if (t >= TOK_IDENT && (parse_flags & PARSE_FLAG_PREPROCESS)) {
         /* if reading from file, try to substitute macros */
         Sym *s = define_find(t);    // 尝试去定义的宏中去找

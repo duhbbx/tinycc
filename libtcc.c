@@ -705,7 +705,10 @@ ST_FUNC void tcc_close(void)
 
     char * old_filename = bf->filename;
     file = bf->prev;
-    const char * new_filename = file ? file->filename : "上一个为空";
+    const char * new_filename = file ? file->filename : "下一个为空";
+    if (!file) {
+        printf("没有新的文件需要解析了................................准备结束了");
+    }
     printf("上一个解析的文件名: %s, 下一个文件名: %s\n", old_filename, new_filename);
     tok_flags = bf->prev_tok_flags;
     if (!strcmp("a.c", new_filename)) {

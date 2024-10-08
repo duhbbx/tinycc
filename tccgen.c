@@ -5170,7 +5170,7 @@ static CType *type_decl(CType *type, AttributeDef *ad, int *v, int td)
 	    /* XXX: this is not correct to modify 'ad' at this point, but
 	       the syntax is not clear */
 	    parse_attribute(ad);
-	    post = type_decl(type, ad, v, td);
+	    post = type_decl(type, ad, v, td);      // 递归调用这个
 	    skip(')');
 	} else
 	  goto abstract;
@@ -8531,7 +8531,7 @@ static int decl(int l)
         while (1) { /* iterate thru each declaration */
             type = btype;
 	        ad = adbase;
-            type_decl(&type, &ad, &v, TYPE_DIRECT);
+            type_decl(&type, &ad, &v, TYPE_DIRECT); // 解析类型，解析完了之后就会根据类型判断了
 #if 0
             {
                 char buf[500];
